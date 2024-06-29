@@ -13,6 +13,7 @@ const UserSchema = new Schema({
   last_name: { type: String, required: true, maxLength: 20 },
   username: { type: String, required: true, maxLength: 15 },
   hashedPassword: {
+    //max input password (before hashing) is 20, which will be validated in routes
     type: String,
     required: true,
   },
