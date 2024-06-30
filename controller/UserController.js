@@ -3,8 +3,10 @@ const asyncHandler = require('express-async-handler');
 const User = require('../models/User.js');
 const bcrypt = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
+const jwt = require('jsonwebtoken');
 
-//do validation later and prevent duplicate usernames later
+require('dotenv').config(); //import env variables
+
 //req should have the following keys: password, username, first_name, last_name
 exports.signup_post = [
   body('first_name')
@@ -82,11 +84,65 @@ exports.signup_post = [
           username: req.body.username,
           hashedPassword: hashedPassword,
         });
+
         newUser.save(); //SAVE TO DATABASE
-        res.status(201).json({ message: 'Successfully created user' });
+        const token = jwt.sign({ sub: newUser.id }, process.env.JWT_SECRET, {
+          expiresIn: '14d', //expires in 2 weeks
+        });
+        res.status(201).json({ message: 'Successfully created user', token });
       } catch (err) {
         return next(err);
       }
+    });
+  }),
+];
+
+//will validate later
+//req should have the following keys: password, username
+exports.login_post = [
+  body('username')
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage('Please enter an email.')
+    .isLength({ max: 15 })
+    .withMessage('Username - Maximum character length is 15')
+    .isAlphanumeric()
+    .withMessage('Username - Letters and numbers only')
+    .escape(),
+  body('password')
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage('Please enter a password.')
+    .isLength({ max: 20 })
+    .withMessage('Password - Password is too long')
+    .escape(),
+
+  asyncHandler(async (req, res, next) => {
+    const user = await User.findOne({ username: req.body.username }); //attempt to get user from database
+    if (!user) {
+      //if user does not exists
+      res
+        .status(404)
+        .json({ statusSucc: false, msg: 'Username does not exist' });
+      return;
+    }
+
+    const match = await bcrypt.compare(req.body.password, user.hashedPassword);
+
+    if (!match) {
+      res
+        .status(401)
+        .json({ statusSucc: false, msg: 'Password does not match' });
+      return;
+    }
+
+    const token = jwt.sign({ sub: user.id }, process.env.JWT_SECRET, {
+      expiresIn: '14d', //expires in 2 weeks
+    });
+    res.json({
+      statusSucc: true,
+      message: 'Successfully logged in, token dispatched',
+      token,
     });
   }),
 ];

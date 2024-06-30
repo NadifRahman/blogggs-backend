@@ -12,6 +12,9 @@ const app = express();
 //CONFIG THE DATABASE
 require('./config/database.js');
 
+//CONFIG passport
+require('./config/passport.js');
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -34,7 +37,7 @@ app.use(function (err, req, res, next) {
 
   let responseToJson = {
     statusSucc: false,
-    msg: `Status code ${err.status}`,
+    message: `Status code ${err.status}`,
   };
 
   if (req.app.get('env') === 'development') {

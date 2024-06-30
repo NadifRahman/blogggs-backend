@@ -4,10 +4,10 @@ const UserController = require('../controller/UserController');
 
 /* GET users listing. */
 router.get('/', function (req, res, next) {
-  res.json({ msg: 'users' });
+  res.json({ message: 'users' });
 });
 
 router.post('/sign-up', UserController.signup_post);
-router.post('/login');
+router.post('/log-in', UserController.login_post);
 
 module.exports = router;
