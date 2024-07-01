@@ -1,5 +1,6 @@
 const asyncHandler = require('express-async-handler');
 const Post = require('../models/Post');
+const Comment = require('../models/Comment');
 const passport = require('passport');
 const { body, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
@@ -69,6 +70,7 @@ exports.posts_post = [
   }),
 ];
 
+//URI param should have 'postid'
 exports.posts_postid_get = [
   passport.authenticate('jwt', { session: false }), //PROTECTED ROUTE
 
@@ -93,5 +95,126 @@ exports.posts_postid_get = [
         .status(200)
         .json({ statusSucc: true, message: 'Found post', post: foundPost });
     }
+  }),
+];
+
+/*
+- URL PARAM should have 'postid' param
+- Will return empty array under comments key if no comments exist
+
+This middleware gets all the comments (in newest to oldest older) under a specific post 
+given by the postid param
+
+*/
+exports.comments_postid_get = [
+  passport.authenticate('jwt', { session: false }), //PROTECTED ROUTE
+
+  asyncHandler(async (req, res, next) => {
+    const postId = req.params['postid']; //get from url param
+
+    if (!mongoose.isValidObjectId(postId)) {
+      //if the param isnt in mongodb id form
+
+      res.status(404).json({
+        statusSucc: false,
+        message: 'Post with given postid cannot be found',
+      });
+      return;
+    }
+
+    const postExists = await Post.exists({ _id: postId });
+
+    if (!postExists) {
+      //if post does not exist
+      res.status(404).json({
+        statusSucc: false,
+        message: 'Post with given postid cannot be found',
+      });
+      return;
+    }
+
+    const allComments = await Comment.find({ post_id: postId }) ///get all of the comments for the partciular post
+      .sort({
+        date_created: -1,
+      })
+      .populate({
+        path: 'author_id',
+        select: 'first_name last_name -_id', // returns only first_name and last_name
+      });
+
+    res.status(200).json({
+      statusSucc: true,
+      message:
+        allComments.length > 0
+          ? 'Successfully found comments'
+          : 'No comments exist currently',
+      comments: allComments,
+    });
+  }),
+];
+
+/*
+- URL PARAM should have 'postid' param
+- Should have a comment_string on body
+
+This middleware creates a comment under a given post (by the postid param) under 
+the user who is authenticated to use this route.
+*/
+exports.comments_postid_post = [
+  body('comment_string')
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage('A comment message string is required')
+    .isLength({ max: 250 })
+    .withMessage('Comment - Comment too long (max character length is 250)')
+    .escape(),
+
+  passport.authenticate('jwt', { session: false }), //PROTECTED ROUTE
+
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      res.status(422).json({
+        statusSucc: false,
+        message: 'There are errors in the data sent',
+        errors: errors.errors,
+      });
+    }
+
+    const postId = req.params['postid']; //get from url param
+
+    if (!mongoose.isValidObjectId(postId)) {
+      //if the param isnt in mongodb id form
+
+      res.status(404).json({
+        statusSucc: false,
+        message: 'Post with given postid cannot be found',
+      });
+      return;
+    }
+
+    const postExists = await Post.exists({ _id: postId }); //see if post exists
+
+    if (!postExists) {
+      //if post does not exist
+      res.status(404).json({
+        statusSucc: false,
+        message: 'Post with given postid cannot be found',
+      });
+      return;
+    }
+
+    const newComment = new Comment({
+      author_id: req.user.id,
+      post_id: postId,
+      comment_string: req.body.comment_string,
+    });
+
+    await newComment.save(); //save the comment
+
+    res
+      .status(201)
+      .json({ statusSucc: true, message: 'Successfully created comment' });
   }),
 ];

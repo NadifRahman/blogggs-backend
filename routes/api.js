@@ -13,4 +13,8 @@ router.post('/posts', APIController.posts_post);
 
 router.get('/posts/:postid', APIController.posts_postid_get);
 
+router.get('/comments/:postid', APIController.comments_postid_get);
+
+router.post('/comments/:postid', APIController.comments_postid_post);
+
 module.exports = router;
