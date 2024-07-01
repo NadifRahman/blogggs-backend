@@ -37,7 +37,7 @@ app.use(function (err, req, res, next) {
 
   let responseToJson = {
     statusSucc: false,
-    message: `Status code ${err.status}`,
+    message: `Status code ${err.status || 500}`,
   };
 
   if (req.app.get('env') === 'development') {
