@@ -97,7 +97,6 @@ exports.signup_post = [
   }),
 ];
 
-//will validate later
 //req should have the following keys: password, username
 exports.login_post = [
   body('username')
@@ -128,6 +127,7 @@ exports.login_post = [
         message: 'There are errors',
         errors: errorMessages,
       });
+      return;
     }
 
     const user = await User.findOne({ username: req.body.username }); //attempt to get user from database
