@@ -53,7 +53,7 @@ exports.signup_post = [
     const userExists = await User.exists({ username: req.body.username }); //see if a user already exists with the username
 
     if (userExists) {
-      errors.errors.push({ msg: 'User with the username already exists' });
+      errors.errors.push({ message: 'User with the username already exists' });
       res.status(409).json({
         statusSucc: false,
         message: 'username already taken',
@@ -103,7 +103,7 @@ exports.login_post = [
   body('username')
     .trim()
     .isLength({ min: 1 })
-    .withMessage('Please enter an email.')
+    .withMessage('Please enter an username')
     .isLength({ max: 15 })
     .withMessage('Username - Maximum character length is 15')
     .isAlphanumeric()
@@ -118,12 +118,24 @@ exports.login_post = [
     .escape(),
 
   asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      const errorMessages = errors.errors.map((error) => error.msg);
+
+      res.status(422).json({
+        statusSucc: false,
+        message: 'There are errors',
+        errors: errorMessages,
+      });
+    }
+
     const user = await User.findOne({ username: req.body.username }); //attempt to get user from database
     if (!user) {
       //if user does not exists
       res
         .status(404)
-        .json({ statusSucc: false, msg: 'Username does not exist' });
+        .json({ statusSucc: false, message: 'Username does not exist' });
       return;
     }
 
@@ -132,14 +144,14 @@ exports.login_post = [
     if (!match) {
       res
         .status(401)
-        .json({ statusSucc: false, msg: 'Password does not match' });
+        .json({ statusSucc: false, message: 'Password does not match' });
       return;
     }
 
     const token = jwt.sign({ sub: user.id }, process.env.JWT_SECRET, {
       expiresIn: '14d', //expires in 2 weeks
     });
-    res.json({
+    res.status(200).json({
       statusSucc: true,
       message: 'Successfully logged in, token dispatched',
       token,
