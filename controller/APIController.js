@@ -7,10 +7,11 @@ const mongoose = require('mongoose');
 
 //returns all posts in newst to oldest order
 exports.posts_get = [
-  passport.authenticate('jwt', { session: false }), //PROTECTED ROUTE
-
   asyncHandler(async (req, res, next) => {
-    const Posts = await Post.find().sort({ date_created: -1 });
+    const Posts = await Post.find().sort({ date_created: -1 }).populate({
+      path: 'author_id',
+      select: 'first_name last_name -_id', // returns only first_name and last_name
+    });
     res.status(200).json({
       statusSucc: true,
       message:
@@ -72,8 +73,6 @@ exports.posts_post = [
 
 //URI param should have 'postid'
 exports.posts_postid_get = [
-  passport.authenticate('jwt', { session: false }), //PROTECTED ROUTE
-
   asyncHandler(async (req, res, next) => {
     const postId = req.params['postid']; //get from url param
 
@@ -107,8 +106,6 @@ given by the postid param
 
 */
 exports.comments_postid_get = [
-  passport.authenticate('jwt', { session: false }), //PROTECTED ROUTE
-
   asyncHandler(async (req, res, next) => {
     const postId = req.params['postid']; //get from url param
 
