@@ -67,7 +67,11 @@ exports.posts_post = [
 
     res
       .status(201)
-      .json({ statusSucc: true, message: 'Successfull created blogpost' });
+      .json({
+        statusSucc: true,
+        message: 'Successfull created blogpost',
+        postid: newPost.id,
+      });
   }),
 ];
 
@@ -83,7 +87,10 @@ exports.posts_postid_get = [
       return;
     }
 
-    const foundPost = await Post.findOne({ _id: postId });
+    const foundPost = await Post.findOne({ _id: postId }).populate({
+      path: 'author_id',
+      select: 'first_name last_name -_id', // returns only first_name and last_name
+    });
 
     if (!foundPost) {
       //if no post was found

@@ -53,21 +53,24 @@ exports.signup_post = [
     const userExists = await User.exists({ username: req.body.username }); //see if a user already exists with the username
 
     if (userExists) {
-      errors.errors.push({ message: 'User with the username already exists' });
+      errors.errors.push({ msg: 'User with the username already exists' });
+      const errorMessages = errors.errors.map((error) => error.msg);
       res.status(409).json({
+        //do the error msg array thingie
         statusSucc: false,
         message: 'username already taken',
-        errors: errors.errors,
+        errors: errorMessages,
       });
       return;
     }
 
     if (!errors.isEmpty()) {
       //if errors is not empty
+      const errorMessages = errors.errors.map((error) => error.msg);
       res.status(422).json({
         statusSucc: false,
-        message: 'username already taken',
-        errors: errors.errors,
+        message: 'there are errors',
+        errors: errorMessages,
       });
       return;
     }
