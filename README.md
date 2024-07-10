@@ -1,6 +1,6 @@
 -> [Backend Repo](https://github.com/NadifRahman/blogggs-backend)
 -> [Live Demo](https://blogggs-frontend.vercel.app/)
-# Bloggs
+# Blogggs
 Blogggs is a website based on the MERN stack (MongoDB, ExpressJS, ReactJS, NodeJS). 
 
 ## Overview
